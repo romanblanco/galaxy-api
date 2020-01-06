@@ -6,6 +6,11 @@ from .collection import (
     CollectionVersionDetailSerializer,
     CollectionVersionBaseSerializer,
 )
+
+from .group import (
+    GroupSerializer,
+)
+
 from .imports import (
     ImportTaskDetailSerializer,
     ImportTaskListSerializer,
@@ -28,6 +33,7 @@ __all__ = (
     'CertificationSerializer',
     'CollectionVersionDetailSerializer',
     'CollectionVersionBaseSerializer',
+    'GroupSerializer',
     'ImportTaskDetailSerializer',
     'ImportTaskListSerializer',
     'NamespaceSerializer',
