@@ -1,9 +1,8 @@
 from django.db import transaction
 
-from rest_framework.serializers import ModelSerializer, SlugRelatedField
+from rest_framework.serializers import ModelSerializer
 
 from galaxy_api.api import models
-from galaxy_api.auth import models as auth_models
 
 
 class NamespaceLinkSerializer(ModelSerializer):
@@ -14,11 +13,6 @@ class NamespaceLinkSerializer(ModelSerializer):
 
 class NamespaceSerializer(ModelSerializer):
     links = NamespaceLinkSerializer(many=True, required=False)
-    groups = SlugRelatedField(
-            many=True,
-            slug_field='name',
-            queryset=auth_models.Group.objects.all()
-    )
 
     class Meta:
         model = models.Namespace

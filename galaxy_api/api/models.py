@@ -35,9 +35,7 @@ class Namespace(models.Model):
     avatar_url = models.CharField(max_length=256, blank=True)
     description = models.CharField(max_length=256, blank=True)
     resources = models.TextField(blank=True)
-
-    # References
-    groups = models.ManyToManyField(auth_models.Group, related_name="namespaces")
+    groups = models.CharField(max_length=256, default="")
 
     def __str__(self):
         return self.name
