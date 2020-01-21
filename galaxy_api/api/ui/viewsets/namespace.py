@@ -3,10 +3,18 @@ from django_filters.rest_framework import filterset, DjangoFilterBackend
 
 from rest_framework import mixins
 from rest_framework import viewsets
+from rest_framework import status
+
 from rest_framework.settings import api_settings
+from rest_framework.response import Response
 
 from galaxy_api.api import models, permissions
 from galaxy_api.api.ui import serializers
+
+from galaxy_api.auth import models as auth_models
+
+
+RH_ACCOUNT_SCOPE = 'rh-identity-account'
 
 
 class NamespaceFilter(filterset.FilterSet):
@@ -49,6 +57,24 @@ class NamespaceViewSet(
     filter_backends = (DjangoFilterBackend,)
 
     filterset_class = NamespaceFilter
+
+    def create(self, request, *args, **kwargs):
+        groups = []
+        for account in request.data['groups']:
+            if account == 'system:partner-engineers':
+                groups.append(account)
+            else:
+                group, _ = auth_models.Group.objects.get_or_create_identity(
+                        RH_ACCOUNT_SCOPE, account)
+                group.save()
+                groups.append(group.name)
+        request.data['groups'] = groups
+
+        serializer = serializers.NamespaceSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get_serializer_class(self):
         if self.action == 'list':
