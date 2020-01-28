@@ -11,10 +11,11 @@ from rest_framework.response import Response
 from galaxy_api.api import models, permissions
 from galaxy_api.api.ui import serializers
 
+from galaxy_api.auth import auth as auth
 from galaxy_api.auth import models as auth_models
 
 
-RH_ACCOUNT_SCOPE = 'rh-identity-account'
+RH_PE_ACCOUNT_SCOPE = 'system:partner-engineers'
 
 
 class NamespaceFilter(filterset.FilterSet):
@@ -45,7 +46,6 @@ class NamespaceFilter(filterset.FilterSet):
 class NamespaceViewSet(
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
-    mixins.CreateModelMixin,
     mixins.UpdateModelMixin,
     viewsets.GenericViewSet,
 ):
@@ -61,17 +61,16 @@ class NamespaceViewSet(
     def create(self, request, *args, **kwargs):
         groups = []
         for account in request.data['groups']:
-            if account == 'system:partner-engineers':
+            if account == RH_PE_ACCOUNT_SCOPE:
                 groups.append(account)
             else:
                 group, _ = auth_models.Group.objects.get_or_create_identity(
-                        RH_ACCOUNT_SCOPE, account)
-                group.save()
+                        auth.RH_ACCOUNT_SCOPE, account)
                 groups.append(group.name)
         request.data['groups'] = groups
 
         serializer = serializers.NamespaceSerializer(data=request.data)
-        if serializer.is_valid(raise_exception=True):
+        if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
