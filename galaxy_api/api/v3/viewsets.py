@@ -13,6 +13,7 @@
 # limitations under the License.
 import json
 import logging
+import tarfile
 from urllib import parse as urlparse
 
 import requests
@@ -159,6 +160,8 @@ class CollectionArtifactUploadView(views.APIView):
         data = serializer.validated_data
         filename = data['filename']
 
+        self._check_is_tarfile(list(data.values())[0].file)
+
         try:
             namespace = Namespace.objects.get(name=filename.namespace)
         except Namespace.DoesNotExist:
@@ -215,6 +218,19 @@ class CollectionArtifactUploadView(views.APIView):
 
         metrics.collection_import_successes.inc()
         return Response(data=upload_response_data, status=upload_response.status)
+
+    def _check_is_tarfile(self, file):
+        """Validate artifact is tarfile in view, before importer starts."""
+        file.seek(0)
+        iobytes = file.read()
+
+        try:
+            t = tarfile.open(mode='r', fileobj=iobytes)
+            t.close()
+        except tarfile.TarError:
+            raise ValidationError(
+                'Artifact is not a valid tar archive file.'
+            )
 
     @staticmethod
     def _prepare_post_params(data):
